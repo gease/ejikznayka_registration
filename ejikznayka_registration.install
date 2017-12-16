@@ -1,0 +1,14 @@
+<?php
+
+/**
+ * @file
+ *
+ * Installation and update hooks for ejikznayka_registration module.
+ */
+
+function ejikznayka_registration_update_8301(&$sandbox) {
+  \Drupal::configFactory()->getEditable('core.entity_form_display.user.user.default')
+    ->set('hidden.field_ejikznayka_referral_code', TRUE)
+    ->set('hidden.field_ejikznayka_referral_user', TRUE)
+    ->save();
+}
