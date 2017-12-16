@@ -36,6 +36,7 @@ function ejikznayka_registration_form_user_register_form_alter(array &$form, For
     '#size' => 32,
     '#maxlength' => 32,
     '#weight' => 3,
+    '#description' => t('Put here the code you received from the person who invited you to sign up.'),
   );
   $form['#validate'][] = 'ejikznayka_registration_form_validate';
   $form['actions']['submit']['#submit'][] = 'ejikznayka_registration_form_submit';
