@@ -42,10 +42,32 @@ function ejikznayka_registration_form_user_register_form_alter(array &$form, For
   $form['actions']['submit']['#submit'][] = 'ejikznayka_registration_form_submit';
 }
 
+/**
+ * Custom form validation callback to check user reference.
+ * @see  * @see ejikznayka_registration_form_user_register_form_alter().
+ */
 function ejikznayka_registration_form_validate(&$form, FormStateInterface $form_state) {
-  if (!empty($form_state->getValue('ejikznayka_registration_hash'))
-    && strlen($form_state->getValue('ejikznayka_registration_hash')) != 32) {
-    $form_state->setErrorByName('ejikznayka_registration_hash', t('Incorrect format of registration code.'));
+  $ejikznayka_registration_hash = trim($form_state->getValue('ejikznayka_registration_hash'));
+  if (!empty($ejikznayka_registration_hash)) {
+    if (strlen($ejikznayka_registration_hash) != 32) {
+      $form_state->setErrorByName('ejikznayka_registration_hash', t('Incorrect format of registration code.'));
+    }
+    else {
+      $query = \Drupal::entityQuery('user');
+      $result = $query->condition('field_ejikznayka_referral_code', $ejikznayka_registration_hash)->execute();
+      if (empty($result)) {
+        $form_state->setErrorByName('ejikznayka_registration_hash', t('Such registration code does not exist.'));
+      }
+      else {
+        if (count($result) > 1) {
+          // Bad practice. We should have created our dedicated exception class and provide catch block.
+          throw new \Exception('Several users with the same referral code.');
+        }
+        else {
+          $form_state->set('ejikznayka_registration_referral_user_id', $result[array_keys($result)[0]]);
+        }
+      }
+    }
   }
 }
 
@@ -55,21 +77,16 @@ function ejikznayka_registration_form_validate(&$form, FormStateInterface $form_
  * @see ejikznayka_registration_form_user_register_form_alter()
  */
 function ejikznayka_registration_form_submit(&$form, FormStateInterface $form_state) {
-  $query = \Drupal::entityQuery('user');
-  $result = $query->condition('field_ejikznayka_referral_code', $form_state->getValue('ejikznayka_registration_hash'))->execute();
-  if (count($result) > 1) {
-    // Bad practice. We should have created our dedicated exception class and provide catch block.
-    throw new \Exception('Several users with the same referral code.');
-  }
-
-  if (!empty($result)) {
-    $form_state->getFormObject()->getEntity()->set('field_ejikznayka_referral_user', $result[array_keys($result)[0]])->save();
-  }
+  /** @var User $user */
+  $user = $form_state->getFormObject()->getEntity();
+  $referral_id = $form_state->get('ejikznayka_registration_referral_user_id');
+  $user->set('field_ejikznayka_referral_user', $referral_id ?: 1)->save();
 }
 
 /**
  * Implements hook_ENTITY_TYPE_create().
  */
 function ejikznayka_registration_user_create(User $user) {
-  $user->set('field_ejikznayka_referral_code', Random::string(32));
+  $random = new Random();
+  $user->set('field_ejikznayka_referral_code', $random->string(32));
 }
