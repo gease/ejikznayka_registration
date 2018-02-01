@@ -44,7 +44,7 @@ function ejikznayka_registration_form_user_register_form_alter(array &$form, For
 
 /**
  * Custom form validation callback to check user reference.
- * @see  * @see ejikznayka_registration_form_user_register_form_alter().
+ * @see ejikznayka_registration_form_user_register_form_alter().
  */
 function ejikznayka_registration_form_validate(&$form, FormStateInterface $form_state) {
   $ejikznayka_registration_hash = trim($form_state->getValue('ejikznayka_registration_hash'));
@@ -88,5 +88,5 @@ function ejikznayka_registration_form_submit(&$form, FormStateInterface $form_st
  */
 function ejikznayka_registration_user_create(User $user) {
   $random = new Random();
-  $user->set('field_ejikznayka_referral_code', $random->string(32));
+  $user->set('field_ejikznayka_referral_code', $random->name(32));
 }
